@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centro de Pestañas — Recordatorios</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --border: #e8e4de;
+    --border-strong: #d0cab8;
+    --text: #1a1714;
+    --text-muted: #8a8278;
+    --text-light: #b5afa6;
+    --accent: #c9a96e;
+    --accent-light: #f5edd8;
+    --accent-dark: #9c7a42;
+    --green: #3a7d5a;
+    --green-bg: #eaf4ee;
+    --green-border: #a8d4b8;
+    --amber: #9c6f00;
+    --amber-bg: #fef6e0;
+    --amber-border: #f0cc70;
+    --red: #a03030;
+    --red-bg: #fdeaea;
+    --wa-green: #25D366;
+    --wa-dark: #128C7E;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  header span {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .main { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    width: fit-content;
+  }
+
+  .tab {
+    padding: 7px 18px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 400;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); background: var(--bg); }
+
+  .tab.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+  input, select, textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+  .btn {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 400;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--bg); border-color: var(--accent); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent-dark);
+    font-weight: 500;
+  }
+
+  .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+  .btn-wa15 { background: var(--wa-green); color: #fff; border-color: #1aab52; font-weight: 500; }
+  .btn-wa15:hover { background: #1aab52; border-color: #1aab52; }
+  .btn-wa21 { background: var(--wa-dark); color: #fff; border-color: #0a6d61; font-weight: 500; }
+  .btn-wa21:hover { background: #0a6d61; border-color: #0a6d61; }
+
+  .btn-ghost { border-color: transparent; color: var(--text-muted); }
+  .btn-ghost:hover { color: var(--red); background: var(--red-bg); border-color: transparent; }
+
+  .actions { display: flex; gap: 8px; margin-top: 1.25rem; justify-content: flex-end; }
+
+  .client-list { display: flex; flex-direction: column; }
+
+  .client-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .client-row:last-child { border-bottom: none; }
+
+  .client-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .client-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    line-height: 1.6;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .badge-neutral { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+  .badge-15 { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .badge-21 { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+
+  .client-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+  .empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-style: italic;
+  }
+
+  .alert {
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-top: 12px;
+    border: 1px solid;
+  }
+
+  .alert-ok { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+  .alert-err { background: var(--red-bg); color: var(--red); border-color: #e0aaaa; }
+
+  .separator { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+  .msg-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  .hint code {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 1rem; }
+    .main { padding: 1.25rem 1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .client-row { grid-template-columns: 1fr; }
+    .client-btns { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Centro de Pestañas</h1>
+  <span>Gestión de recordatorios</span>
+</header>
+
+<div class="main">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('clientas', this)">Clientas</button>
+    <button class="tab" onclick="showTab('nueva', this)">Nueva clienta</button>
+    <button class="tab" onclick="showTab('mensajes', this)">Mensajes</button>
+  </div>
+
+  <!-- CLIENTAS -->
+  <div id="tab-clientas" class="section active">
+    <div class="card">
+      <div id="client-list" class="client-list"></div>
+    </div>
+  </div>
+
+  <!-- NUEVA CLIENTA -->
+  <div id="tab-nueva" class="section">
+    <div class="card">
+      <p class="card-title" id="form-title">Nueva clienta</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" id="f-nombre" placeholder="Ej: Laura García">
+        </div>
+        <div class="form-group">
+          <label>Teléfono (con prefijo) *</label>
+          <input type="tel" id="f-telefono" placeholder="Ej: 34612345678">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="f-email" placeholder="Ej: laura@email.com">
+        </div>
+        <div class="form-group">
+          <label>Lashista</label>
+          <input type="text" id="f-lashista" placeholder="Ej: Ana">
+        </div>
+        <div class="form-group full">
+          <label>Tipo de servicio</label>
+          <input type="text" id="f-servicio" placeholder="Ej: Extensión volumen, relleno clásico...">
+        </div>
+        <div class="form-group">
+          <label>Fecha última cita *</label>
+          <input type="date" id="f-fecha">
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <input type="text" id="f-notas" placeholder="Ej: alérgica al látex">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="clearForm()">Limpiar</button>
+        <button class="btn btn-primary" onclick="saveClient()">Guardar clienta</button>
+      </div>
+      <div id="form-msg"></div>
+    </div>
+  </div>
+
+  <!-- MENSAJES -->
+  <div id="tab-mensajes" class="section">
+    <div class="card">
+      <p class="card-title">Personaliza los mensajes</p>
+      <p class="hint">Usa <code>{nombre}</code> para insertar el nombre de la clienta automáticamente.</p>
+      <hr class="separator">
+      <div style="margin-bottom: 1rem;">
+        <div class="msg-label">
+          Recordatorio
+          <span class="badge badge-15">15 días</span>
+        </div>
+        <textarea id="msg-15"></textarea>
+      </div>
+      <div>
+        <div class="msg-label">
+          Recordatorio
+          <span class="badge badge-21">21 días</span>
+        </div>
+        <textarea id="msg-21"></textarea>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="saveMsgs()">Guardar mensajes</button>
+      </div>
+      <div id="msg-alert"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_15 = "Hola {nombre} 😊 Te escribimos desde el centro de pestañas para recordarte que ya han pasado 15 días desde tu última visita. ¡Es el momento ideal para tu retoque y que tus pestañas sigan perfectas! Escríbenos para reservar tu cita 🌟";
+const DEFAULT_21 = "Hola {nombre} 😊 Han pasado 21 días desde tu última cita y tus pestañas te están pidiendo un retoque cuanto antes 😄 Contáctanos para reservar y mantener ese look perfecto ✨";
+
+let clients = [];
+let msg15 = DEFAULT_15;
+let msg21 = DEFAULT_21;
+let editIdx = null;
+
+function load() {
+  try {
+    const c = localStorage.getItem('lash_clients');
+    if (c) clients = JSON.parse(c);
+    const m15 = localStorage.getItem('lash_msg15');
+    if (m15) msg15 = m15;
+    const m21 = localStorage.getItem('lash_msg21');
+    if (m21) msg21 = m21;
+  } catch(e) {}
+  document.getElementById('msg-15').value = msg15;
+  document.getElementById('msg-21').value = msg21;
+  renderClients();
+}
+
+function persist() {
+  try { localStorage.setItem('lash_clients', JSON.stringify(clients)); } catch(e) {}
+}
+
+function showTab(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+function daysSince(dateStr) {
+  if (!dateStr) return null;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+
+function renderClients() {
+  const list = document.getElementById('client-list');
+  if (!clients.length) {
+    list.innerHTML = '<div class="empty">No hay clientas registradas.<br>Usa la pestaña "Nueva clienta" para empezar.</div>';
+    return;
+  }
+  const sorted = [...clients].map((c, i) => ({...c, _i: i})).sort((a, b) => (daysSince(b.fecha) || 0) - (daysSince(a.fecha) || 0));
+  list.innerHTML = sorted.map(c => {
+    const dias = daysSince(c.fecha);
+    let badge = '';
+    if (dias !== null) {
+      if (dias >= 21) badge = `<span class="badge badge-21">${dias} días</span>`;
+      else if (dias >= 15) badge = `<span class="badge badge-15">${dias} días</span>`;
+      else badge = `<span class="badge badge-neutral">${dias} días</span>`;
+    }
+    const meta = [c.telefono, c.servicio, c.lashista ? 'Lashista: ' + c.lashista : '', c.notas ? 'Nota: ' + c.notas : ''].filter(Boolean).join(' · ');
+    return `<div class="client-row">
+      <div>
+        <div class="client-name">${c.nombre} ${badge}</div>
+        <div class="client-meta">${meta}</div>
+      </div>
+      <div class="client-btns">
+        <button class="btn btn-wa15" onclick="sendWA(${c._i},15)" style="font-size:12px;padding:5px 12px;">WA 15d</button>
+        <button class="btn btn-wa21" onclick="sendWA(${c._i},21)" style="font-size:12px;padding:5px 12px;">WA 21d</button>
+        <button class="btn" onclick="startEdit(${c._i})" style="font-size:12px;padding:5px 12px;">Editar</button>
+        <button class="btn btn-ghost" onclick="deleteClient(${c._i})" style="font-size:12px;padding:5px 12px;">Borrar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function sendWA(i, days) {
+  const c = clients[i];
+  const text = (days === 15 ? msg15 : msg21).replace(/{nombre}/gi, c.nombre);
+  const tel = c.telefono.replace(/\D/g, '');
+  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function saveClient() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const telefono = document.getElementById('f-telefono').value.trim();
+  const fecha = document.getElementById('f-fecha').value;
+  if (!nombre || !telefono || !fecha) {
+    document.getElementById('form-msg').innerHTML = '<div class="alert alert-err">Nombre, teléfono y fecha son obligatorios.</div>';
+    return;
+  }
+  const obj = {
+    nombre,
+    telefono: telefono.replace(/\D/g, ''),
+    email: document.getElementById('f-email').value.trim(),
+    lashista: document.getElementById('f-lashista').value.trim(),
+    servicio: document.getElementById('f-servicio').value.trim(),
+    fecha,
+    notas: document.getElementById('f-notas').value.trim()
+  };
+  if (editIdx !== null) { clients[editIdx] = obj; editIdx = null; }
+  else { clients.push(obj); }
+  persist();
+  renderClients();
+  clearForm();
+  document.getElementById('form-msg').innerHTML = '<div class="alert alert-ok">Clienta guardada correctamente.</div>';
+  setTimeout(() => { document.getElementById('form-msg').innerHTML = ''; }, 2500);
+  document.getElementById('form-title').textContent = 'Nueva clienta';
+}
+
+function clearForm() {
+  ['f-nombre','f-telefono','f-email','f-lashista','f-servicio','f-fecha','f-notas'].forEach(id => document.getElementById(id).value = '');
+  editIdx = null;
+  document.getElementById('form-title').textContent = 'Nueva clienta';
+  document.getElementById('form-msg').innerHTML = '';
+}
+
+function startEdit(i) {
+  const c = clients[i];
+  editIdx = i;
+  document.getElementById('f-nombre').value = c.nombre;
+  document.getElementById('f-telefono').value = c.telefono;
+  document.getElementById('f-email').value = c.email || '';
+  document.getElementById('f-lashista').value = c.lashista || '';
+  document.getElementById('f-servicio').value = c.servicio || '';
+  document.getElementById('f-fecha').value = c.fecha || '';
+  document.getElementById('f-notas').value = c.notas || '';
+  document.getElementById('form-title').textContent = 'Editar clienta — ' + c.nombre;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-nueva').classList.add('active');
+  document.querySelectorAll('.tab')[1].classList.add('active');
+}
+
+function deleteClient(i) {
+  if (!confirm('¿Borrar a ' + clients[i].nombre + '?')) return;
+  clients.splice(i, 1);
+  persist();
+  renderClients();
+}
+
+function saveMsgs() {
+  msg15 = document.getElementById('msg-15').value;
+  msg21 = document.getElementById('msg-21').value;
+  try { localStorage.setItem('lash_msg15', msg15); localStorage.setItem('lash_msg21', msg21); } catch(e) {}
+  document.getElementById('msg-alert').innerHTML = '<div class="alert alert-ok">Mensajes guardados.</div>';
+  setTimeout(() => { document.getElementById('msg-alert').innerHTML = ''; }, 2000);
+}
+
+load();
+</script>
+</body>
+</html>

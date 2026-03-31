@@ -27,6 +27,8 @@
     --red-bg: #fdeaea;
     --wa-green: #25D366;
     --wa-dark: #128C7E;
+    --google-blue: #4285F4;
+    --google-blue-dark: #2a6dd9;
     --radius: 10px;
     --radius-lg: 16px;
   }
@@ -74,6 +76,7 @@
     border-radius: var(--radius);
     padding: 4px;
     width: fit-content;
+    flex-wrap: wrap;
   }
 
   .tab {
@@ -176,6 +179,9 @@
   .btn-wa15:hover { background: #1aab52; border-color: #1aab52; }
   .btn-wa21 { background: var(--wa-dark); color: #fff; border-color: #0a6d61; font-weight: 500; }
   .btn-wa21:hover { background: #0a6d61; border-color: #0a6d61; }
+
+  .btn-google { background: var(--google-blue); color: #fff; border-color: var(--google-blue-dark); font-weight: 500; }
+  .btn-google:hover { background: var(--google-blue-dark); border-color: var(--google-blue-dark); }
 
   .btn-ghost { border-color: transparent; color: var(--text-muted); }
   .btn-ghost:hover { color: var(--red); background: var(--red-bg); border-color: transparent; }
@@ -294,6 +300,7 @@
   <div class="tabs">
     <button class="tab active" onclick="showTab('clientas', this)">Clientas</button>
     <button class="tab" onclick="showTab('nueva', this)">Nueva clienta</button>
+    <button class="tab" onclick="showTab('resenas', this)">Reseñas</button>
     <button class="tab" onclick="showTab('mensajes', this)">Mensajes</button>
   </div>
 
@@ -346,25 +353,40 @@
     </div>
   </div>
 
+  <!-- RESEÑAS -->
+  <div id="tab-resenas" class="section">
+    <div class="card">
+      <p class="card-title">Pedir reseña en Google</p>
+      <p class="hint">Selecciona una clienta de la lista para enviarle el mensaje de reseña por WhatsApp. El mensaje incluirá su nombre, el servicio que se hizo y el enlace a Google.</p>
+      <hr class="separator">
+      <div id="resena-list" class="client-list"></div>
+    </div>
+  </div>
+
   <!-- MENSAJES -->
   <div id="tab-mensajes" class="section">
     <div class="card">
       <p class="card-title">Personaliza los mensajes</p>
-      <p class="hint">Usa <code>{nombre}</code> para insertar el nombre de la clienta automáticamente.</p>
+      <p class="hint">Usa <code>{nombre}</code> para el nombre, <code>{servicio}</code> para el tipo de servicio y <code>{enlace}</code> para el enlace de Google Reviews.</p>
       <hr class="separator">
-      <div style="margin-bottom: 1rem;">
+      <div style="margin-bottom: 1.25rem;">
         <div class="msg-label">
-          Recordatorio
-          <span class="badge badge-15">15 días</span>
+          Recordatorio <span class="badge badge-15">15 días</span>
         </div>
         <textarea id="msg-15"></textarea>
       </div>
-      <div>
+      <div style="margin-bottom: 1.25rem;">
         <div class="msg-label">
-          Recordatorio
-          <span class="badge badge-21">21 días</span>
+          Recordatorio <span class="badge badge-21">21 días</span>
         </div>
         <textarea id="msg-21"></textarea>
+      </div>
+      <div style="margin-bottom: 1.25rem;">
+        <div class="msg-label">
+          Mensaje de reseña Google
+          <span class="badge" style="background:#e8f0fe;color:#2a6dd9;border:1px solid #b3c8f7;">Google</span>
+        </div>
+        <textarea id="msg-resena"></textarea>
       </div>
       <div class="actions">
         <button class="btn btn-primary" onclick="saveMsgs()">Guardar mensajes</button>
@@ -377,10 +399,13 @@
 <script>
 const DEFAULT_15 = "Hola {nombre} 😊 Te escribimos desde el centro de pestañas para recordarte que ya han pasado 15 días desde tu última visita. ¡Es el momento ideal para tu retoque y que tus pestañas sigan perfectas! Escríbenos para reservar tu cita 🌟";
 const DEFAULT_21 = "Hola {nombre} 😊 Han pasado 21 días desde tu última cita y tus pestañas te están pidiendo un retoque cuanto antes 😄 Contáctanos para reservar y mantener ese look perfecto ✨";
+const DEFAULT_RESENA = "Hola {nombre}! Somos de Lashes Original. La semana pasada te atendiste con nosotras y nos encantaría saber qué tal te fue. ¿Puedes contárnoslo en este enlace {enlace} mencionando que te hiciste {servicio}? Gracias!! Nos vemos pronto 🌟";
+const GOOGLE_URL = "https://maps.app.goo.gl/6pmomjuMkT2c2Y3i9?g_st=ic";
 
 let clients = [];
 let msg15 = DEFAULT_15;
 let msg21 = DEFAULT_21;
+let msgResena = DEFAULT_RESENA;
 let editIdx = null;
 
 function load() {
@@ -391,10 +416,14 @@ function load() {
     if (m15) msg15 = m15;
     const m21 = localStorage.getItem('lash_msg21');
     if (m21) msg21 = m21;
+    const mr = localStorage.getItem('lash_msg_resena');
+    if (mr) msgResena = mr;
   } catch(e) {}
   document.getElementById('msg-15').value = msg15;
   document.getElementById('msg-21').value = msg21;
+  document.getElementById('msg-resena').value = msgResena;
   renderClients();
+  renderResenas();
 }
 
 function persist() {
@@ -406,6 +435,7 @@ function showTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   el.classList.add('active');
+  if (name === 'resenas') renderResenas();
 }
 
 function daysSince(dateStr) {
@@ -444,9 +474,40 @@ function renderClients() {
   }).join('');
 }
 
+function renderResenas() {
+  const list = document.getElementById('resena-list');
+  if (!clients.length) {
+    list.innerHTML = '<div class="empty">No hay clientas registradas todavía.</div>';
+    return;
+  }
+  const sorted = [...clients].map((c, i) => ({...c, _i: i})).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  list.innerHTML = sorted.map(c => {
+    const meta = [c.telefono, c.servicio, c.lashista ? 'Lashista: ' + c.lashista : ''].filter(Boolean).join(' · ');
+    return `<div class="client-row">
+      <div>
+        <div class="client-name">${c.nombre}</div>
+        <div class="client-meta">${meta}</div>
+      </div>
+      <div class="client-btns">
+        <button class="btn btn-google" onclick="sendResena(${c._i})" style="font-size:12px;padding:5px 12px;">Pedir reseña</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function sendWA(i, days) {
   const c = clients[i];
   const text = (days === 15 ? msg15 : msg21).replace(/{nombre}/gi, c.nombre);
+  const tel = c.telefono.replace(/\D/g, '');
+  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function sendResena(i) {
+  const c = clients[i];
+  const text = msgResena
+    .replace(/{nombre}/gi, c.nombre)
+    .replace(/{servicio}/gi, c.servicio || 'el servicio')
+    .replace(/{enlace}/gi, GOOGLE_URL);
   const tel = c.telefono.replace(/\D/g, '');
   window.open(`https://wa.me/${tel}?text=${encodeURIComponent(text)}`, '_blank');
 }
@@ -512,7 +573,12 @@ function deleteClient(i) {
 function saveMsgs() {
   msg15 = document.getElementById('msg-15').value;
   msg21 = document.getElementById('msg-21').value;
-  try { localStorage.setItem('lash_msg15', msg15); localStorage.setItem('lash_msg21', msg21); } catch(e) {}
+  msgResena = document.getElementById('msg-resena').value;
+  try {
+    localStorage.setItem('lash_msg15', msg15);
+    localStorage.setItem('lash_msg21', msg21);
+    localStorage.setItem('lash_msg_resena', msgResena);
+  } catch(e) {}
   document.getElementById('msg-alert').innerHTML = '<div class="alert alert-ok">Mensajes guardados.</div>';
   setTimeout(() => { document.getElementById('msg-alert').innerHTML = ''; }, 2000);
 }
